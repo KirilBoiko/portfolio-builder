@@ -41,7 +41,7 @@ except ImportError as exc:  # pragma: no cover
 
 # Gemini model to use for generation.
 # gemini-1.5-pro gives the richest HTML; swap to gemini-1.5-flash for speed.
-GEMINI_MODEL = "gemini-2.0-flash"
+GEMINI_MODEL = "gemini-3-flash-preview"
 
 # Maximum tokens the model is allowed to produce (one-file HTML can be large).
 MAX_OUTPUT_TOKENS = 8192
@@ -246,8 +246,6 @@ def deploy_to_github(github_token: str, html_code: str) -> str:
             homepage=f"https://{username}.github.io/{repo_name}/",
             private=False,
             auto_init=True,       # creates an initial commit so the branch exists
-            gitignore_template=None,
-            license_template=None,
         )
     except GithubException as exc:
         if exc.status == 422:
@@ -271,19 +269,6 @@ def deploy_to_github(github_token: str, html_code: str) -> str:
     except GithubException as exc:
         raise RuntimeError(f"Failed to push index.html: {exc}") from exc
 
-    # ── Enable GitHub Pages (source = root of main branch) ────────────────────
-    try:
-        repo.enable_pages(source={"branch": PAGES_BRANCH, "path": "/"})
-    except GithubException as exc:
-        # Pages enablement can sometimes fail on fresh repos or token scope issues.
-        # We still return the expected URL — the user can enable Pages manually.
-        pages_url = f"https://{username}.github.io/{repo_name}/"
-        print(
-            f"[Warning] Could not automatically enable GitHub Pages: {exc}\n"
-            f"Please enable it manually at: {repo.html_url}/settings/pages\n"
-            f"Expected URL once enabled: {pages_url}"
-        )
-        return pages_url
 
     # ── Return the live Pages URL ──────────────────────────────────────────────
     pages_url = f"https://{username}.github.io/{repo_name}/"
